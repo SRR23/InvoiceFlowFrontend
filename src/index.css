@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* App-wide base: Tailwind layers + font smoothing */
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply min-h-screen bg-slate-950 text-slate-100;
+    font-family:
+      'Plus Jakarta Sans',
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+}
