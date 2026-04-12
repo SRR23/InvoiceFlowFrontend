@@ -107,20 +107,27 @@ export function AuthProvider({ children }) {
     return nextUser
   }, [])
 
-  const logout = useCallback(async () => {
-    const { refresh } = getStoredTokens()
-    if (refresh) {
-      try {
-        await apiFetch(`${AUTH_PREFIX}/logout/`, {
-          method: 'POST',
-          body: JSON.stringify({ refresh_token: refresh }),
-        })
-      } catch {
-        /* still clear local session */
-      }
-    }
+  /**
+   * Optimistic logout: clear UI and storage immediately so sign-out feels instant.
+   * Blacklist the refresh token in the background (server still invalidates it when reachable).
+   */
+  const logout = useCallback(() => {
+    const { access, refresh } = getStoredTokens()
     clearStoredAuth()
     setUser(null)
+
+    if (refresh && access) {
+      void fetch(`${AUTH_PREFIX}/logout/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${access}`,
+        },
+        body: JSON.stringify({ refresh_token: refresh }),
+      }).catch(() => {
+        /* offline / slow server — session already cleared locally */
+      })
+    }
   }, [])
 
   const updateProfile = useCallback(async (partial) => {

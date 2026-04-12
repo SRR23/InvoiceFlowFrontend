@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { GoogleLogin } from '@react-oauth/google'
 import { AuthLayout } from '../components/AuthLayout'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormField, TextInput } from '../components/FormField'
 import { useAuth } from '../context/useAuth'
 import { GOOGLE_CLIENT_ID } from '../lib/config'
@@ -92,33 +92,25 @@ export function LoginPage() {
         ) : null}
 
         {GOOGLE_CLIENT_ID ? (
-          <div className="flex justify-center [&>div]:!w-full">
-            <GoogleLogin
-              onSuccess={async (cred) => {
-                if (!cred.credential) return
-                setError('')
-                setLoading(true)
-                try {
-                  await loginWithGoogle(cred.credential)
-                  navigate(from, { replace: true })
-                } catch (err) {
-                  setError(err.message || 'Google sign-in failed')
-                } finally {
-                  setLoading(false)
-                }
-              }}
-              onError={() => setError('Google sign-in was cancelled or failed')}
-              theme="filled_black"
-              size="large"
-              text="signin_with"
-              shape="rectangular"
-              width="100%"
-            />
-          </div>
+          <GoogleSignInButton
+            onGoogleUiError={() => setError('Google sign-in was cancelled or failed')}
+            onCredential={async (credential) => {
+              setError('')
+              setLoading(true)
+              try {
+                await loginWithGoogle(credential)
+                navigate(from, { replace: true })
+              } catch (err) {
+                setError(err.message || 'Google sign-in failed')
+              } finally {
+                setLoading(false)
+              }
+            }}
+          />
         ) : (
           <p className="text-center text-xs text-slate-500">
-            Set <code className="text-slate-400">VITE_GOOGLE_CLIENT_ID</code> to enable
-            Google sign-in.
+            Set <code className="text-slate-400">VITE_GOOGLE_CLIENT_ID</code> to enable Google
+            sign-in.
           </p>
         )}
 

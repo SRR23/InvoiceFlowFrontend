@@ -31,10 +31,6 @@ export function AuthLayout({ title, subtitle, children }) {
         <div className="rounded-2xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-8">
           {children}
         </div>
-
-        <p className="mt-8 text-center text-xs text-slate-500">
-          Secure authentication powered by your InvoiceFlow API.
-        </p>
       </div>
     </div>
   )

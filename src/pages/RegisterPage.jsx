@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { GoogleLogin } from '@react-oauth/google'
 import { AuthLayout } from '../components/AuthLayout'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormField, SelectInput, TextInput } from '../components/FormField'
 import { CURRENCY_OPTIONS } from '../constants/currencies'
 import { useAuth } from '../context/useAuth'
@@ -197,29 +197,21 @@ export function RegisterPage() {
         ) : null}
 
         {GOOGLE_CLIENT_ID ? (
-          <div className="flex justify-center [&>div]:!w-full">
-            <GoogleLogin
-              onSuccess={async (cred) => {
-                if (!cred.credential) return
-                setError('')
-                setLoading(true)
-                try {
-                  await loginWithGoogle(cred.credential)
-                  navigate('/dashboard', { replace: true })
-                } catch (err) {
-                  setError(err.message || 'Google sign-up failed')
-                } finally {
-                  setLoading(false)
-                }
-              }}
-              onError={() => setError('Google sign-in was cancelled or failed')}
-              theme="filled_black"
-              size="large"
-              text="signup_with"
-              shape="rectangular"
-              width="100%"
-            />
-          </div>
+          <GoogleSignInButton
+            onGoogleUiError={() => setError('Google sign-in was cancelled or failed')}
+            onCredential={async (credential) => {
+              setError('')
+              setLoading(true)
+              try {
+                await loginWithGoogle(credential)
+                navigate('/dashboard', { replace: true })
+              } catch (err) {
+                setError(err.message || 'Google sign-up failed')
+              } finally {
+                setLoading(false)
+              }
+            }}
+          />
         ) : null}
 
         <p className="text-center text-sm text-slate-400">

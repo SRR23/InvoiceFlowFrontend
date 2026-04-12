@@ -44,7 +44,7 @@ export function AppShell() {
               <button
                 type="button"
                 onClick={() => logout()}
-                className="shrink-0 rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white sm:px-3 sm:text-sm"
+                className="shrink-0 cursor-pointer rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 hover:text-white sm:px-3 sm:text-sm"
               >
                 Sign out
               </button>

@@ -27,7 +27,6 @@ export function InvoiceDetailPage() {
 
   const [form, setForm] = useState({
     client: '',
-    invoice_number: '',
     issue_date: '',
     due_date: '',
     status: 'DRAFT',
@@ -48,7 +47,6 @@ export function InvoiceDetailPage() {
       setInvoice(data)
       setForm({
         client: String(data.client),
-        invoice_number: data.invoice_number,
         issue_date: data.issue_date,
         due_date: data.due_date,
         status: data.status,
@@ -79,7 +77,6 @@ export function InvoiceDetailPage() {
     try {
       const updated = await apiPatch(`/api/invoices/${id}/`, {
         client: Number(form.client),
-        invoice_number: form.invoice_number.trim(),
         issue_date: form.issue_date,
         due_date: form.due_date,
         status: form.status,
@@ -281,22 +278,24 @@ export function InvoiceDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
             <h2 className="text-lg font-medium text-white">Totals</h2>
-            <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-              <div className="flex justify-between gap-4 border-b border-slate-800/80 py-2">
-                <dt className="text-slate-500">Subtotal</dt>
-                <dd>{formatMoney(invoice.subtotal, invoice.currency)}</dd>
+            <dl className="mt-4 text-sm">
+              <div className="flex min-h-[2.75rem] items-center justify-between gap-8 border-b border-slate-800/80 py-2.5">
+                <dt className="shrink-0 text-slate-500">Subtotal</dt>
+                <dd className="tabular-nums text-right text-white">{formatMoney(invoice.subtotal, invoice.currency)}</dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-slate-800/80 py-2">
-                <dt className="text-slate-500">Tax</dt>
-                <dd>{formatMoney(invoice.tax, invoice.currency)}</dd>
+              <div className="flex min-h-[2.75rem] items-center justify-between gap-8 border-b border-slate-800/80 py-2.5">
+                <dt className="shrink-0 text-slate-500">Tax</dt>
+                <dd className="tabular-nums text-right text-white">{formatMoney(invoice.tax, invoice.currency)}</dd>
               </div>
-              <div className="flex justify-between gap-4 border-b border-slate-800/80 py-2">
-                <dt className="text-slate-500">Discount</dt>
-                <dd>{formatMoney(invoice.discount, invoice.currency)}</dd>
+              <div className="flex min-h-[2.75rem] items-center justify-between gap-8 border-b border-slate-800/80 py-2.5">
+                <dt className="shrink-0 text-slate-500">Discount</dt>
+                <dd className="tabular-nums text-right text-white">{formatMoney(invoice.discount, invoice.currency)}</dd>
               </div>
-              <div className="flex justify-between gap-4 py-2 text-lg font-semibold text-white">
-                <dt>Total</dt>
-                <dd>{formatMoney(invoice.total_amount, invoice.currency)}</dd>
+              <div className="mt-3 flex items-center justify-between gap-8 border-t border-slate-600/50 pt-4">
+                <dt className="text-base font-semibold text-white">Total</dt>
+                <dd className="tabular-nums text-right text-lg font-semibold text-white">
+                  {formatMoney(invoice.total_amount, invoice.currency)}
+                </dd>
               </div>
             </dl>
           </div>
@@ -434,9 +433,11 @@ export function InvoiceDetailPage() {
                 {metaError}
               </div>
             ) : null}
-            <FormField id="inv-num" label="Invoice number">
-              <TextInput id="inv-num" value={form.invoice_number} onChange={updateForm('invoice_number')} />
-            </FormField>
+            <div className="rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Invoice number</p>
+              <p className="mt-1 font-mono text-sm text-white">{invoice.invoice_number}</p>
+              <p className="mt-1 text-xs text-slate-500">Assigned when this invoice was created; it cannot be changed.</p>
+            </div>
             <FormField id="inv-st" label="Status">
               <SelectInput id="inv-st" value={form.status} onChange={updateForm('status')}>
                 {['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'].map((s) => (
