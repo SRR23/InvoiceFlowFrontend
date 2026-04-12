@@ -99,7 +99,12 @@ export function InvoiceCreatePage() {
         notes: notes.trim(),
         items: cleaned,
       })
-      navigate(`/invoices/${created.id}`)
+      // Backend must return `id` on create (InvoiceCreateSerializer); otherwise avoid /invoices/undefined.
+      if (created?.id != null) {
+        navigate(`/invoices/${created.id}`)
+      } else {
+        navigate('/invoices')
+      }
     } catch (err) {
       setError(err.message)
     } finally {
