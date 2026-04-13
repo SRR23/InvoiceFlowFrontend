@@ -16,6 +16,21 @@ function defaultNewItem() {
   }
 }
 
+/** Short preview only; full URL is still used for copy, open, and the native tooltip. */
+function formatPaymentLinkPreview(url, maxChars = 40) {
+  if (!url) return '—'
+  const trimmed = url.trim()
+  if (trimmed.length <= maxChars) return trimmed
+  return `${trimmed.slice(0, maxChars)}…`
+}
+
+/** Invoice `due_date` is YYYY-MM-DD; true when that day is before today (local calendar). */
+function isInvoicePastDue(dueDateStr) {
+  if (!dueDateStr) return false
+  const today = new Date().toISOString().slice(0, 10)
+  return dueDateStr < today
+}
+
 export function InvoiceDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -38,6 +53,8 @@ export function InvoiceDetailPage() {
   const [newItem, setNewItem] = useState(defaultNewItem)
   const [addingItem, setAddingItem] = useState(false)
   const [actionMsg, setActionMsg] = useState('')
+  /** 'stripe' | 'ssl' | null while creating a hosted session */
+  const [generatingPayment, setGeneratingPayment] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -150,28 +167,46 @@ export function InvoiceDetailPage() {
     }
   }
 
-  async function payStripe() {
+  async function createStripePaymentLink() {
     setError('')
+    setActionMsg('')
+    setGeneratingPayment('stripe')
     try {
-      const data = await apiPost('/api/payments/stripe/create/', {
+      await apiPost('/api/payments/stripe/create/', {
         invoice_id: Number(id),
       })
-      if (data.checkout_url) window.location.href = data.checkout_url
+      await load()
+      setActionMsg('Stripe payment link created. Copy a link below and send it to your client.')
+      setTimeout(() => setActionMsg(''), 5000)
     } catch (e) {
       setError(e.message)
+    } finally {
+      setGeneratingPayment(null)
     }
   }
 
-  async function paySsl() {
+  async function createSslPaymentLink() {
     setError('')
+    setActionMsg('')
+    setGeneratingPayment('ssl')
     try {
-      const data = await apiPost('/api/payments/sslcommerz/create/', {
+      await apiPost('/api/payments/sslcommerz/create/', {
         invoice_id: Number(id),
       })
-      if (data.redirect_url) window.location.href = data.redirect_url
+      await load()
+      setActionMsg('SSLCommerz payment link created. Copy a link below and send it to your client.')
+      setTimeout(() => setActionMsg(''), 5000)
     } catch (e) {
       setError(e.message)
+    } finally {
+      setGeneratingPayment(null)
     }
+  }
+
+  function copyPaymentUrl(url) {
+    void navigator.clipboard.writeText(url)
+    setActionMsg('Payment link copied to clipboard.')
+    setTimeout(() => setActionMsg(''), 3000)
   }
 
   function copyPublicLink() {
@@ -202,6 +237,9 @@ export function InvoiceDetailPage() {
 
   const canPay = invoice.status !== 'PAID' && invoice.status !== 'CANCELLED'
   const canCancel = invoice.status !== 'PAID' && invoice.status !== 'CANCELLED'
+  const pastDue = isInvoicePastDue(invoice.due_date)
+  const canCreatePaymentLinks = canPay && !pastDue
+  const pendingPaymentLinks = Array.isArray(invoice.pending_payment_links) ? invoice.pending_payment_links : []
 
   return (
     <div className="space-y-8">
@@ -401,25 +439,91 @@ export function InvoiceDetailPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
               <h2 className="text-lg font-medium text-white">Collect payment</h2>
               <p className="mt-1 text-xs text-slate-500">
-                Opens your configured Stripe Checkout or SSLCommerz session. Requires gateway keys in
-                settings.
+                Generate a hosted payment link and save it on this invoice. Links are shown until the invoice due
+                date ({invoice.due_date}). When the client pays, the pending link is removed. Stripe sessions also
+                follow Stripe&apos;s maximum session length (up to 24 hours); generate a new link if needed before
+                the due date. Requires gateway keys under Payment gateway settings.
               </p>
-              <div className="mt-4 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={payStripe}
-                  className="rounded-xl bg-[#635BFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#544ccd]"
-                >
-                  Pay with Stripe
-                </button>
-                <button
-                  type="button"
-                  onClick={paySsl}
-                  className="rounded-xl border border-emerald-700/80 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-950/60"
-                >
-                  Pay with SSLCommerz
-                </button>
-              </div>
+              {canCreatePaymentLinks ? (
+                <>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={createStripePaymentLink}
+                      disabled={generatingPayment !== null}
+                      className="rounded-xl bg-[#635BFF] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#544ccd] disabled:opacity-60"
+                    >
+                      {generatingPayment === 'stripe' ? 'Creating link…' : 'Generate Stripe payment link'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={createSslPaymentLink}
+                      disabled={generatingPayment !== null}
+                      className="rounded-xl border border-emerald-700/80 bg-emerald-950/40 px-4 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-950/60 disabled:opacity-60"
+                    >
+                      {generatingPayment === 'ssl' ? 'Creating link…' : 'Generate SSLCommerz payment link'}
+                    </button>
+                  </div>
+                  {pendingPaymentLinks.length > 0 ? (
+                    <div className="mt-6 border-t border-slate-800 pt-4">
+                      <h3 className="text-sm font-medium text-slate-300">Saved payment links</h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Valid until invoice due date ({invoice.due_date}) or until paid. Copy sends the full link;
+                        hover the preview to see it.
+                      </p>
+                      <ul className="mt-3 space-y-2">
+                        {pendingPaymentLinks.map((row) => (
+                          <li
+                            key={row.id}
+                            className="rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-sm"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                                {row.gateway === 'stripe' ? 'Stripe' : 'SSLCommerz'}
+                              </span>
+                              <span className="text-[11px] text-slate-500">
+                                {row.created_at ? formatDateTime(row.created_at) : ''}
+                              </span>
+                            </div>
+                            {row.valid_until ? (
+                              <p className="mt-1 text-[11px] text-slate-500">
+                                Valid until {row.valid_until} (due date)
+                              </p>
+                            ) : null}
+                        <p
+                          className="mt-1.5 font-mono text-[11px] leading-relaxed text-slate-400"
+                          title={row.payment_url}
+                        >
+                          {formatPaymentLinkPreview(row.payment_url)}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => copyPaymentUrl(row.payment_url)}
+                            className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
+                          >
+                            Copy full link
+                          </button>
+                          <a
+                            href={row.payment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-emerald-400 hover:bg-slate-800"
+                          >
+                            Open
+                          </a>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+                </>
+              ) : (
+                <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-200/90">
+                  Payment links are not available after the due date ({invoice.due_date}).
+                </p>
+              )}
             </div>
           ) : null}
 
