@@ -68,10 +68,10 @@ export function HomePage() {
                   Invoices
                 </Link>
                 <Link
-                  to="/dashboard"
+                  to="/account"
                   className="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-500/20"
                 >
-                  Open app
+                  Account
                 </Link>
               </>
             ) : (
@@ -369,17 +369,28 @@ export function HomePage() {
             <span>Invoicing &amp; payments</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <Link to="/login" className="text-slate-400 hover:text-white">
-              Sign in
-            </Link>
-            <Link to="/register" className="text-slate-400 hover:text-white">
-              Register
-            </Link>
             {isAuthenticated ? (
-              <Link to="/dashboard" className="text-slate-400 hover:text-white">
-                App
-              </Link>
-            ) : null}
+              <>
+                <Link to="/dashboard" className="text-slate-400 hover:text-white">
+                  Dashboard
+                </Link>
+                <Link to="/invoices" className="text-slate-400 hover:text-white">
+                  Invoices
+                </Link>
+                <Link to="/account" className="text-slate-400 hover:text-white">
+                  Account
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-slate-400 hover:text-white">
+                  Sign in
+                </Link>
+                <Link to="/register" className="text-slate-400 hover:text-white">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </footer>
