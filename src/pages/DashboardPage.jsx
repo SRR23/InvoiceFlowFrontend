@@ -71,7 +71,7 @@ export function DashboardPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-white">Dashboard</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Overview of your invoices and revenue. Stats are cached on the server for a few minutes.
+          Overview of your invoices and revenue.
         </p>
       </div>
 

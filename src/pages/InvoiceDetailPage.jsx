@@ -259,41 +259,36 @@ export function InvoiceDetailPage() {
             {invoice.client_email ? ` · ${invoice.client_email}` : ''}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={copyPublicLink}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900"
+            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800/80"
           >
             Copy public link
           </button>
           <button
             type="button"
             onClick={() => postAction('send_email/', null)}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900"
+            className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-900/40 hover:bg-emerald-500"
+            title="Queues email to the client and sets status to Sent when the message is sent."
           >
-            Queue email
+            Email to client
           </button>
-          <button
-            type="button"
-            onClick={() => postAction('mark_sent/', 'Marked as sent.')}
-            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900"
-          >
-            Mark sent
-          </button>
+          <span className="hidden h-6 w-px bg-slate-700 sm:inline-block" aria-hidden />
           {canCancel ? (
             <button
               type="button"
               onClick={() => postAction('cancel/', 'Invoice cancelled.')}
-              className="rounded-xl border border-amber-800/80 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-amber-950/30"
+              className="rounded-xl border border-amber-800/80 px-4 py-2 text-sm font-medium text-amber-200 transition duration-150 ease-out hover:border-amber-500/70 hover:bg-amber-950/50 hover:text-amber-100 hover:shadow-md hover:shadow-amber-950/30 active:scale-[0.98]"
             >
-              Cancel invoice
+              Cancel
             </button>
           ) : null}
           <button
             type="button"
             onClick={deleteInvoice}
-            className="rounded-xl border border-rose-800/80 px-4 py-2 text-sm font-medium text-rose-300 hover:bg-rose-950/30"
+            className="rounded-xl border border-rose-800/80 px-4 py-2 text-sm font-medium text-rose-300 transition duration-150 ease-out hover:border-rose-500/70 hover:bg-rose-950/45 hover:text-rose-200 hover:shadow-md hover:shadow-rose-950/30 active:scale-[0.98]"
           >
             Delete
           </button>
@@ -438,12 +433,26 @@ export function InvoiceDetailPage() {
           {canPay ? (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5">
               <h2 className="text-lg font-medium text-white">Collect payment</h2>
-              <p className="mt-1 text-xs text-slate-500">
-                Generate a hosted payment link and save it on this invoice. Links are shown until the invoice due
-                date ({invoice.due_date}). When the client pays, the pending link is removed. Stripe sessions also
-                follow Stripe&apos;s maximum session length (up to 24 hours); generate a new link if needed before
-                the due date. Requires gateway keys under Payment gateway settings.
-              </p>
+              <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2.5 text-xs leading-relaxed text-slate-400">
+                <ul className="list-inside list-disc space-y-2 marker:text-slate-600">
+                  <li>
+                    <span className="font-medium text-slate-200">Stripe</span> — Checkout links expire after about{' '}
+                    <strong className="text-slate-100">24 hours</strong>. If a link stops working, click{' '}
+                    <span className="text-slate-300">Generate Stripe payment link</span> again to create a new one.
+                  </li>
+                  <li>
+                    <span className="font-medium text-slate-200">SSLCommerz</span> — If the hosted page expired or
+                    errors, generate a new link with the button below.
+                  </li>
+                </ul>
+                <p className="mt-2 border-t border-slate-800/80 pt-2 text-[11px] text-slate-500">
+                  Add gateway keys under{' '}
+                  <Link to="/settings/payments" className="text-emerald-400/90 hover:text-emerald-300">
+                    Settings → Gateway
+                  </Link>
+                  . Saved links disappear when this invoice is paid.
+                </p>
+              </div>
               {canCreatePaymentLinks ? (
                 <>
                   <div className="mt-4 flex flex-col gap-2">
@@ -467,10 +476,6 @@ export function InvoiceDetailPage() {
                   {pendingPaymentLinks.length > 0 ? (
                     <div className="mt-6 border-t border-slate-800 pt-4">
                       <h3 className="text-sm font-medium text-slate-300">Saved payment links</h3>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Valid until invoice due date ({invoice.due_date}) or until paid. Copy sends the full link;
-                        hover the preview to see it.
-                      </p>
                       <ul className="mt-3 space-y-2">
                         {pendingPaymentLinks.map((row) => (
                           <li
@@ -490,34 +495,34 @@ export function InvoiceDetailPage() {
                                 Valid until {row.valid_until} (due date)
                               </p>
                             ) : null}
-                        <p
-                          className="mt-1.5 font-mono text-[11px] leading-relaxed text-slate-400"
-                          title={row.payment_url}
-                        >
-                          {formatPaymentLinkPreview(row.payment_url)}
-                        </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => copyPaymentUrl(row.payment_url)}
-                            className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
-                          >
-                            Copy full link
-                          </button>
-                          <a
-                            href={row.payment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-emerald-400 hover:bg-slate-800"
-                          >
-                            Open
-                          </a>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
+                            <p
+                              className="mt-1.5 font-mono text-[11px] leading-relaxed text-slate-400"
+                              title={row.payment_url}
+                            >
+                              {formatPaymentLinkPreview(row.payment_url)}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => copyPaymentUrl(row.payment_url)}
+                                className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
+                              >
+                                Copy full link
+                              </button>
+                              <a
+                                href={row.payment_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-md border border-slate-600 px-2.5 py-1 text-[11px] font-medium text-emerald-400 hover:bg-slate-800"
+                              >
+                                Open
+                              </a>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-200/90">

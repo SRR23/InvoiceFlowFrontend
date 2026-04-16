@@ -119,7 +119,7 @@ export function PaymentGatewayPage() {
           Payment gateway settings
         </h1>
         <p className="mt-1 text-sm text-slate-400">
-          Connect Stripe and SSLCommerz. Secrets are write-only; the API never returns raw keys.
+          Connect Stripe and SSLCommerz.
         </p>
       </div>
 
