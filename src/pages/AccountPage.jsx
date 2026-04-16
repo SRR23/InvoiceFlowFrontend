@@ -81,10 +81,6 @@ export function AccountPage() {
         <section className="lg:col-span-2">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 shadow-xl shadow-black/20">
             <h2 className="text-lg font-medium text-white">Profile details</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              These fields map to{' '}
-              <code className="text-slate-400">/api/auth/profile/</code> (PATCH).
-            </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               {message ? (
@@ -206,16 +202,6 @@ export function AccountPage() {
                 </dd>
               </div>
             </dl>
-          </div>
-
-          <div className="rounded-2xl border border-dashed border-slate-700/80 bg-slate-950/40 p-5">
-            <h3 className="text-sm font-medium text-slate-300">Security</h3>
-            <p className="mt-2 text-xs leading-relaxed text-slate-500">
-              Password changes are not exposed in this API yet. Use your backend admin
-              or a future endpoint to rotate credentials. JWT sessions can be ended
-              with <strong className="text-slate-400">Sign out</strong>, which
-              blacklists your refresh token.
-            </p>
           </div>
         </aside>
       </div>
